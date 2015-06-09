@@ -35,8 +35,8 @@
 
 @interface SHKFacebook : SHKSharer <FBSDKGraphRequestConnectionDelegate>
 
-+ (void)handleDidFinishLaunchingWithOptions:(NSDictionary *)launchOptions;
-+ (BOOL)handleOpenURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation;
++ (void)handleApplication:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions;
++ (BOOL)handleApplication:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation;
 + (void)handleDidBecomeActive;
 
 // override point for subclasses that want to do something interesting while sending

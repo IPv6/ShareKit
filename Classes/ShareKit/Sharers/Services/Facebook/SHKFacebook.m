@@ -40,6 +40,21 @@
 #import "FBSDKLoginKit/FBSDKLoginKit.h"
 
 
+#define dispatch_main_sync_safe(block)\
+    if ([NSThread isMainThread]) {\
+        block();\
+    } else {\
+        dispatch_sync(dispatch_get_main_queue(), block);\
+    }
+
+#define dispatch_main_async_safe(block)\
+    if ([NSThread isMainThread]) {\
+        block();\
+    } else {\
+        dispatch_async(dispatch_get_main_queue(), block);\
+    }
+
+
 #define PUBLISH_PERMISSION @"publish_actions"
 
 
@@ -75,10 +90,10 @@
 #pragma mark -
 #pragma mark App lifecycle
 
-+ (void)handleDidFinishLaunchingWithOptions:(NSDictionary *)launchOptions
++ (void)handleApplication:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
 	[SHKFacebook setupFacebookSDK];
-	[[FBSDKApplicationDelegate sharedInstance] application:[UIApplication sharedApplication]
+	[[FBSDKApplicationDelegate sharedInstance] application:application
 							 didFinishLaunchingWithOptions:launchOptions];
 }
 
@@ -90,15 +105,18 @@
     [FBSDKAppEvents activateApp];
 }
 
-+ (BOOL)handleOpenURL:(NSURL*)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
++ (BOOL)handleApplication:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
 	[SHKFacebook setupFacebookSDK];
+
+	SHKLog(@"OpenUrl: %@", url);
     
-	BOOL result = [[FBSDKApplicationDelegate sharedInstance] application:[UIApplication sharedApplication]
+	BOOL result = [[FBSDKApplicationDelegate sharedInstance] application:application
 																 openURL:url
 													   sourceApplication:sourceApplication
 															  annotation:annotation];
 	
+	// TODO: Restore shareItem pending to be sent after auth completed
 	/*
     SHKFacebook *facebookSharer = [[SHKFacebook alloc] init];
     BOOL itemRestored = [facebookSharer restoreItem];
@@ -130,6 +148,15 @@
             }
         }
     }
+
+	if ([self promptAuthorization]) {
+		// TODO: Restore pending item
+
+		if (result) {
+			SHKFacebook *facebookSharer = [[SHKFacebook alloc] init];
+			[facebookSharer authDidFinish:result];
+		}
+	}
 	*/
 
     return result;
@@ -175,7 +202,7 @@
 }
 
 + (BOOL)canShare {
-    return YES;
+    return [self.class hasGranted:@[PUBLISH_PERMISSION]];
 }
 
 #pragma mark -
@@ -185,6 +212,7 @@
 {
 	//SHKLog(@"session is authorized: %@", [FBSDKAccessToken currentAccessToken]);
     BOOL result = ([FBSDKAccessToken currentAccessToken] != nil);
+	SHKLog(@"IS AUTHORIZED: %i", result);
     return result;
 }
 
@@ -193,40 +221,45 @@
     [self saveItemForLater:SHKPendingShare];
 
 	// https://developers.facebook.com/docs/facebook-login/permissions/v2.3#optimizing
+	// For a better sign_in behavior it's recommended to use pre-configures accounts
+	//   from ACAccountStore or FBSDKLoginButton (which knows both read and write permissions)
 
-	void (^requestWritePermissions)() = ^{
-		SHKLog(@"Request write permissions");
-		[[self.class loginManager] logInWithPublishPermissions:SHKCONFIG(facebookWritePermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
-			SHKFacebook *facebookSharer = [SHKFacebook new];
-
-			if (!error && !result.isCancelled) {
-				SHKLog(@"Write permissions Success!");
-				[facebookSharer authDidFinish:YES];
-			}
-			else {
-				SHKLog(@"Write permissions FAIL!");
-				[facebookSharer authDidFinish:NO];
-			}
-		}];
+	void (^checkWritePermissions)() = ^{
+		if (![self.class hasGrantedOrDeclined:SHKCONFIG(facebookWritePermissions)]) {
+			SHKLog(@"Request write permissions");
+			[[self.class loginManager] logInWithPublishPermissions:SHKCONFIG(facebookWritePermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+				BOOL success = (!error && !result.isCancelled);
+				dispatch_main_async_safe(^{
+					[self finishAuthWithResult:success];
+				});
+			}];
+		}
+		else {
+			[self finishAuthWithResult:YES];
+		}
 	};
 
 	if (![self.class hasGrantedOrDeclined:SHKCONFIG(facebookReadPermissions)]) {
 		SHKLog(@"Request read permissions");
 		[[self.class loginManager] logInWithReadPermissions:SHKCONFIG(facebookReadPermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
 			if (!error && !result.isCancelled) {
-				SHKLog(@"Read permissions Success!");
-				requestWritePermissions();
+				dispatch_main_async_safe(checkWritePermissions);
 			}
 			else {
-				SHKLog(@"Read permissions FAIL!");
-				SHKFacebook *facebookSharer = [SHKFacebook new];
-				[facebookSharer authDidFinish:NO];
+				dispatch_main_async_safe(^{
+					[self finishAuthWithResult:NO];
+				});
 			}
 		}];
 	}
-	else if (![self.class hasGrantedOrDeclined:SHKCONFIG(facebookWritePermissions)]) {
-		requestWritePermissions();
+	else {
+		checkWritePermissions();
 	}
+}
+- (void)finishAuthWithResult:(BOOL)result {
+	SHKLog(@"Auth finished: %@!", result ? @"SUCCESS" : @"FAIL");
+	SHKFacebook *facebookSharer = [SHKFacebook new];
+	[facebookSharer authDidFinish:result];
 }
 
 + (NSString *)username {
@@ -419,21 +452,6 @@
             completionBlock(nil);
         }
     }];
-}
-
-- (void)FBUserInfoRequestHandlerCallback:(FBSDKGraphRequestConnection *)connection
-								  result:(id)result
-								   error:(NSError *)error
-{
-	if (error) {
-        SHKLog(@"FB user info request failed with error:%@", error);
-        return;
-    }
-    
-    [result convertNSNullsToEmptyStrings];
-    [[NSUserDefaults standardUserDefaults] setObject:result forKey:kSHKFacebookUserInfo];
-    [self sendDidFinish];
-    [[SHK currentHelper] removeSharerReference:self];
 }
 
 #pragma mark - FBRequestConnectionDelegate methods
