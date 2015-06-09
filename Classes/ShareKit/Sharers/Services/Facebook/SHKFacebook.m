@@ -38,6 +38,8 @@
 
 #import "FBSDKCoreKit/FBSDKCoreKit.h"
 #import "FBSDKLoginKit/FBSDKLoginKit.h"
+#import "FBSDKSystemAccountStoreAdapter.h"
+#import "FBSDKDynamicFrameworkLoader.h"
 
 
 #define dispatch_main_sync_safe(block)\
@@ -212,52 +214,92 @@
 {
 	//SHKLog(@"session is authorized: %@", [FBSDKAccessToken currentAccessToken]);
     BOOL result = ([FBSDKAccessToken currentAccessToken] != nil);
-	SHKLog(@"IS AUTHORIZED: %i", result);
     return result;
 }
 
 - (void)promptAuthorization
 {
     [self saveItemForLater:SHKPendingShare];
+	[self displayActivity:SHKLocalizedString(@"Authenticating...")];
 
-	// https://developers.facebook.com/docs/facebook-login/permissions/v2.3#optimizing
-	// For a better sign_in behavior it's recommended to use pre-configures accounts
-	//   from ACAccountStore or FBSDKLoginButton (which knows both read and write permissions)
-
-	void (^checkWritePermissions)() = ^{
-		if (![self.class hasGrantedOrDeclined:SHKCONFIG(facebookWritePermissions)]) {
-			SHKLog(@"Request write permissions");
-			[[self.class loginManager] logInWithPublishPermissions:SHKCONFIG(facebookWritePermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
-				BOOL success = (!error && !result.isCancelled);
-				dispatch_main_async_safe(^{
-					[self finishAuthWithResult:success];
-				});
-			}];
-		}
-		else {
-			[self finishAuthWithResult:YES];
-		}
-	};
-
-	if (![self.class hasGrantedOrDeclined:SHKCONFIG(facebookReadPermissions)]) {
-		SHKLog(@"Request read permissions");
-		[[self.class loginManager] logInWithReadPermissions:SHKCONFIG(facebookReadPermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
-			if (!error && !result.isCancelled) {
-				dispatch_main_async_safe(checkWritePermissions);
-			}
-			else {
-				dispatch_main_async_safe(^{
-					[self finishAuthWithResult:NO];
-				});
-			}
-		}];
+	if (![FBSDKSystemAccountStoreAdapter sharedInstance].accountType) {
+		[self signInUsingSystemAccount:NO];
 	}
 	else {
-		checkWritePermissions();
+		SHKLog(@"Try to get system account...");
+		NSSet *basicPermissions = [NSSet setWithObject:@"email"];
+		BOOL isReauthorize = [self isAuthorized];
+		[[FBSDKSystemAccountStoreAdapter sharedInstance]
+		 requestAccessToFacebookAccountStore:basicPermissions
+		 defaultAudience:fbsdkdfl_ACFacebookAudienceFriends()
+		 isReauthorize:isReauthorize
+		 appID:[FBSDKSettings appID]
+		 handler:^(NSString *oauthToken, NSError *accountStoreError) {
+			 BOOL isUnTOSedDevice = (!oauthToken && accountStoreError.code == ACErrorAccountNotFound);
+			 BOOL willUseSystemAccount = !isUnTOSedDevice;
+			 [self signInUsingSystemAccount:willUseSystemAccount];
+		 }];
 	}
 }
+
+- (void)signInUsingSystemAccount:(BOOL)willUseSystemAccount {
+	// Read and publish permissions must requested separately
+	// https://developers.facebook.com/docs/facebook-login/permissions/v2.3#optimizing
+	NSArray *readPermissions = SHKCONFIG(facebookReadPermissions);
+	NSArray *writePermissions = SHKCONFIG(facebookWritePermissions);
+
+	// When logging in through web we can define only Publish permissions.
+	//   This way we get both read and write permissions on 2 separate web pages
+	//   without returning to the app.
+	// But we need to request read and write permissions separately if using
+	//   system facebook account. Need to clarify which way we choose before
+	//   making read permissions request.
+	if (![self.class hasGrantedOrDeclined:readPermissions] ||
+		(readPermissions.count == 0 && willUseSystemAccount)) {
+		[self requestReadPermissions];
+	}
+	else if (![self.class hasGrantedOrDeclined:writePermissions]) {
+		[self requestWritePermissions];
+	}
+	else {
+		[self finishAuthWithResult:YES];
+	}
+}
+
+- (void)requestReadPermissions {
+	SHKLog(@"Request read permissions");
+	[[self.class loginManager] logInWithReadPermissions:SHKCONFIG(facebookReadPermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+		if (error) SHKLog(@"%@", error);
+		BOOL success = (!error && !result.isCancelled);
+
+		if (success) {
+			dispatch_main_async_safe(^{
+				[self signInUsingSystemAccount:NO];
+			});
+		} else {
+			dispatch_main_async_safe(^{
+				[self finishAuthWithResult:success];
+			});
+		}
+	}];
+}
+
+- (void)requestWritePermissions {
+	SHKLog(@"Request write permissions");
+	[[self.class loginManager] logInWithPublishPermissions:SHKCONFIG(facebookWritePermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+		if (error) SHKLog(@"%@", error);
+		BOOL success = (!error && !result.isCancelled);
+
+		dispatch_main_async_safe(^{
+			[self finishAuthWithResult:success];
+		});
+	}];
+}
+
 - (void)finishAuthWithResult:(BOOL)result {
 	SHKLog(@"Auth finished: %@!", result ? @"SUCCESS" : @"FAIL");
+	[self hideActivityIndicator];
+
 	SHKFacebook *facebookSharer = [SHKFacebook new];
 	[facebookSharer authDidFinish:result];
 }
@@ -472,6 +514,8 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite {
 }
 
 + (BOOL)hasGranted:(NSArray *)permissions {
+	if (!permissions) return YES;
+
 	// All granted permissions granted by account owner
 	FBSDKAccessToken *accessToken = [FBSDKAccessToken currentAccessToken];
 	NSSet *userPermissions = accessToken.permissions;
@@ -480,6 +524,8 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite {
 }
 
 + (BOOL)hasGrantedOrDeclined:(NSArray *)permissions {
+	if (!permissions) return YES;
+
 	// All defined permissions (granted or declined) by account owner
 	// Including `declinedPermissions` breaks permission requesting loop
 	//   when the app is asking for declined permission again and again
