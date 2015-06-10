@@ -27,53 +27,96 @@
 
 #import <Accounts/Accounts.h>
 
-@interface SHKTwitterUniversal ()
-@property (nonatomic, strong) ACAccountStore *accountStore;
-@property (nonatomic, strong) ACAccountType  *accountType;
-@end
-
 
 @implementation SHKTwitterUniversal
 
-- (void)sharerClassWithCompletion:(void (^)(Class class))completion {
-	if (![SHKTwitterCommon socialFrameworkAvailable] || self.accountStore == nil) {
-		completion(SHKTwitter.class);
-		SHKLog(@"Callback to %@", NSStringFromClass(class));
+static NSMutableArray *_retainContainer = nil;
+
+#pragma mark - Core
+
++ (void)sharerClassWithCompletion:(void (^)(__unsafe_unretained Class class))completion {
+	ACAccountStore *accountStore = [ACAccountStore new];
+	ACAccountType *accountType = [accountStore accountTypeWithAccountTypeIdentifier:self.accountTypeIdentifier];
+
+	if (![SHKTwitterCommon socialFrameworkAvailable] || accountStore == nil) {
+		Class class = SHKTwitter.class;
+		SHKLog(@"Twitter sharer class (fallback): %@", NSStringFromClass(class));
+		completion(class);
 		return;
 	}
 
-	[self.accountStore requestAccessToAccountsWithType:self.accountType options:nil completion:^(BOOL granted, NSError *error) {
-		Class class = (error.code == ACErrorAccountNotFound) ? SHKTwitter.class : SHKiOSTwitter.class;
-		SHKLog(@"Result class %@", NSStringFromClass(class));
+	// AccountStore must be retained until it returns any result in completions block
+	[self.retainContainer addObject:accountStore];
+	[accountStore requestAccessToAccountsWithType:accountType options:nil completion:^(BOOL granted, NSError *error) {
+		Class class = nil;
+
+		if (granted && [self hasAtLeastOneAccount]) {
+			class = SHKiOSTwitter.class;
+		}
+		else {
+			// Including condition (error.code == ACErrorAccountNotFound)
+			class = SHKTwitter.class;
+		}
+
+		[self.retainContainer removeObject:accountStore];
+		SHKLog(@"Twitter sharer class: %@", NSStringFromClass(class));
 		completion(class);
 	}];
 }
 
-+ (void)logOut {
-	[SHKTwitter logout];
++ (BOOL)canShareItem:(SHKItem *)item {
+	return ([SHKiOSTwitter canShareItem:item] && [SHKTwitter canShareItem:item]);
+}
+
++ (id)shareItem:(SHKItem *)i {
+	[self sharerClassWithCompletion:^(__unsafe_unretained Class class) {
+		[class shareItem:i];
+	}];
+	return nil;
+}
+
++ (BOOL)isServiceAuthorized {
+	BOOL system = [SHKiOSTwitter isServiceAuthorized] && [self hasAtLeastOneAccount];
+	BOOL web    = [SHKTwitter isServiceAuthorized];
+	SHKLog(@"System = %i, Web = %i", system, web);
+	return (system || web);
+}
+
++ (BOOL)canShare {
+	return YES;
+}
+
++ (NSString *)username {
+	NSString *systemUsername = [SHKiOSTwitter username];
+	NSString *webUsername    = [SHKTwitter username];
+	return (systemUsername.length > 0) ? systemUsername : webUsername;
+}
+
++ (void)logout {
 	[SHKiOSTwitter logout];
+	[SHKTwitter logout];
 }
 
 #pragma mark - Lazy
 
-- (ACAccountStore *)accountStore {
-	if (!_accountStore) {
-		_accountStore = [ACAccountStore new];
++ (NSMutableArray *)retainContainer {
+	if (!_retainContainer) {
+		_retainContainer = [NSMutableArray array];
 	}
-	return _accountStore;
-}
-
-- (ACAccountType *)accountType {
-	if (!_accountType) {
-		_accountType = [self.accountStore accountTypeWithAccountTypeIdentifier:self.accountTypeIdentifier];
-	}
-	return _accountType;
+	return _retainContainer;
 }
 
 #pragma mark -
 
-- (NSString *)accountTypeIdentifier {
++ (NSString *)accountTypeIdentifier {
 	return ACAccountTypeIdentifierTwitter;
+}
+
++ (BOOL)hasAtLeastOneAccount {
+	ACAccountStore *accountStore = [ACAccountStore new];
+	ACAccountType *accountType = [accountStore accountTypeWithAccountTypeIdentifier:self.accountTypeIdentifier];
+	NSUInteger count = [accountStore accountsWithAccountType:accountType].count;
+	return (count > 0);
 }
 
 @end

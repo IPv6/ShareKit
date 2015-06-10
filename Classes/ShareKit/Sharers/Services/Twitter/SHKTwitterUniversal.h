@@ -25,10 +25,18 @@
 #import "SHKTwitter.h"
 #import "SHKiOSTwitter.h"
 
+@class SHKItem;
+
 @interface SHKTwitterUniversal : NSObject
 
-- (void)sharerClassWithCompletion:(void(^)(Class class))completion;
++ (void)sharerClassWithCompletion:(void(^)(Class class))completion;
 
-+ (void)logOut;
++ (BOOL)canShareItem:(SHKItem *)item;
++ (id)shareItem:(SHKItem *)i;
+
++ (BOOL)isServiceAuthorized;
++ (BOOL)canShare;
++ (NSString *)username;
++ (void)logout;
 
 @end
