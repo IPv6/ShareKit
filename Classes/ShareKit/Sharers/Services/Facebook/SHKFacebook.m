@@ -111,8 +111,6 @@
 {
 	[SHKFacebook setupFacebookSDK];
 
-	SHKLog(@"OpenUrl: %@", url);
-    
 	BOOL result = [[FBSDKApplicationDelegate sharedInstance] application:application
 																 openURL:url
 													   sourceApplication:sourceApplication
@@ -226,7 +224,6 @@
 		[self signInUsingSystemAccount:NO];
 	}
 	else {
-		SHKLog(@"Try to get system account...");
 		NSSet *basicPermissions = [NSSet setWithObject:@"email"];
 		BOOL isReauthorize = [self isAuthorized];
 		[[FBSDKSystemAccountStoreAdapter sharedInstance]
@@ -267,7 +264,6 @@
 }
 
 - (void)requestReadPermissions {
-	SHKLog(@"Request read permissions");
 	[[self.class loginManager] logInWithReadPermissions:SHKCONFIG(facebookReadPermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
 		if (error) SHKLog(@"%@", error);
 		BOOL success = (!error && !result.isCancelled);
@@ -285,7 +281,6 @@
 }
 
 - (void)requestWritePermissions {
-	SHKLog(@"Request write permissions");
 	[[self.class loginManager] logInWithPublishPermissions:SHKCONFIG(facebookWritePermissions) handler:^(FBSDKLoginManagerLoginResult *result, NSError *error) {
 		if (error) SHKLog(@"%@", error);
 		BOOL success = (!error && !result.isCancelled);
@@ -297,7 +292,6 @@
 }
 
 - (void)finishAuthWithResult:(BOOL)result {
-	SHKLog(@"Auth finished: %@!", result ? @"SUCCESS" : @"FAIL");
 	[self hideActivityIndicator];
 
 	SHKFacebook *facebookSharer = [SHKFacebook new];
