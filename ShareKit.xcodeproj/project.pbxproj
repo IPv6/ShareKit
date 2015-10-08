@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		33D8B1251B25DD1E00E47ACB /* FBSDKCoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33D8B1221B25DD1D00E47ACB /* FBSDKCoreKit.framework */; };
 		33D8B1261B25DD1E00E47ACB /* FBSDKLoginKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33D8B1231B25DD1D00E47ACB /* FBSDKLoginKit.framework */; };
+		33F8C7281B282D19009FCC74 /* SHKTwitterUniversal.h in Headers */ = {isa = PBXBuildFile; fileRef = 33F8C7261B282D19009FCC74 /* SHKTwitterUniversal.h */; };
+		33F8C7291B282D19009FCC74 /* SHKTwitterUniversal.m in Sources */ = {isa = PBXBuildFile; fileRef = 33F8C7271B282D19009FCC74 /* SHKTwitterUniversal.m */; };
 		456BADAB169107D1005B3077 /* SHKGooglePlus.h in Headers */ = {isa = PBXBuildFile; fileRef = 456BADA9169107D1005B3077 /* SHKGooglePlus.h */; };
 		456BADAC169107D1005B3077 /* SHKGooglePlus.m in Sources */ = {isa = PBXBuildFile; fileRef = 456BADAA169107D1005B3077 /* SHKGooglePlus.m */; };
 		456BADAD1691095B005B3077 /* libGoogle Plus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4503EBC0169104470057294C /* libGoogle Plus.a */; };
@@ -752,6 +754,8 @@
 		2892E40F0DC94CBA00A64D0F /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		33D8B1221B25DD1D00E47ACB /* FBSDKCoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FBSDKCoreKit.framework; path = Frameworks/FBSDKCoreKit.framework; sourceTree = "<group>"; };
 		33D8B1231B25DD1D00E47ACB /* FBSDKLoginKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FBSDKLoginKit.framework; path = Frameworks/FBSDKLoginKit.framework; sourceTree = "<group>"; };
+		33F8C7261B282D19009FCC74 /* SHKTwitterUniversal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SHKTwitterUniversal.h; sourceTree = "<group>"; };
+		33F8C7271B282D19009FCC74 /* SHKTwitterUniversal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SHKTwitterUniversal.m; sourceTree = "<group>"; };
 		427FBAB11592F7C90024F825 /* ENOAuthViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ENOAuthViewController.h; sourceTree = "<group>"; };
 		427FBAB21592F7C90024F825 /* ENOAuthViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ENOAuthViewController.m; sourceTree = "<group>"; };
 		427FBAED15934A0D0024F825 /* GTMNSString+HTML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "GTMNSString+HTML.h"; path = "../../Core NoARC/Categories/GTMNSString+HTML.h"; sourceTree = "<group>"; };
@@ -2290,6 +2294,8 @@
 				43A536E911DBE3B9004A1712 /* SHKTwitter.m */,
 				F92EF487148E915E0070F913 /* SHKiOSTwitter.h */,
 				F92EF488148E915E0070F913 /* SHKiOSTwitter.m */,
+				33F8C7261B282D19009FCC74 /* SHKTwitterUniversal.h */,
+				33F8C7271B282D19009FCC74 /* SHKTwitterUniversal.m */,
 			);
 			path = Twitter;
 			sourceTree = "<group>";
@@ -3169,6 +3175,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7AE8DC7C165B549B004D99D2 /* DummyLibFile.h in Headers */,
+				33F8C7281B282D19009FCC74 /* SHKTwitterUniversal.h in Headers */,
 				C4823E24192935A90099673A /* SHK1Password.h in Headers */,
 				C4823E10192931730099673A /* SHKChrome.h in Headers */,
 			);
@@ -4730,6 +4737,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				33F8C7291B282D19009FCC74 /* SHKTwitterUniversal.m in Sources */,
 				7AE8DC7D165B549B004D99D2 /* DummyLibFile.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
