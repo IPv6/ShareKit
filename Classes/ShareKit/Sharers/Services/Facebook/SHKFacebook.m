@@ -217,8 +217,13 @@
 
 - (void)promptAuthorization
 {
-    [self saveItemForLater:SHKPendingShare];
-	[self displayActivity:SHKLocalizedString(@"Authenticating...")];
+	[self saveItemForLater:SHKPendingShare];
+
+	NSOperatingSystemVersion iOS9 = (NSOperatingSystemVersion){9, 0, 0};
+	BOOL isIOS9 = [[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:iOS9];
+	if (!isIOS9) {
+		[self displayActivity:SHKLocalizedString(@"Authenticating...")];
+	}
 
 	if (![FBSDKSystemAccountStoreAdapter sharedInstance].accountType) {
 		[self signInUsingSystemAccount:NO];
@@ -240,6 +245,14 @@
 }
 
 - (void)signInUsingSystemAccount:(BOOL)willUseSystemAccount {
+	if (willUseSystemAccount) {
+		NSOperatingSystemVersion iOS9 = (NSOperatingSystemVersion){9, 0, 0};
+		BOOL isIOS9 = [[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:iOS9];
+		if (isIOS9) {
+			[self displayActivity:SHKLocalizedString(@"Authenticating...")];
+		}
+	}
+
 	// Read and publish permissions must requested separately
 	// https://developers.facebook.com/docs/facebook-login/permissions/v2.3#optimizing
 	NSArray *readPermissions = SHKCONFIG(facebookReadPermissions);
