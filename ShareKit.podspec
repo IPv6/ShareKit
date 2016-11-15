@@ -120,10 +120,10 @@ Pod::Spec.new do |s|
 #    readitlater.dependency 'ShareKit/Core'
 #  end
 
-  s.subspec 'Tumblr' do |tumblr|
-    tumblr.source_files = 'Classes/ShareKit/Sharers/Services/Tumblr/**/*.{h,m}'
-    tumblr.dependency 'ShareKit/Core'
-  end
+#  s.subspec 'Tumblr' do |tumblr|
+#    tumblr.source_files = 'Classes/ShareKit/Sharers/Services/Tumblr/**/*.{h,m}'
+#    tumblr.dependency 'ShareKit/Core'
+#  end
 
   s.subspec 'Twitter' do |twitter|
     twitter.source_files = 'Classes/ShareKit/Sharers/Services/Twitter/**/*.{h,m}'
@@ -137,26 +137,26 @@ Pod::Spec.new do |s|
 #    sinaweibo.framework = 'Social'
 #  end
 
-  s.subspec 'Vkontakte' do |vkontakte|
-    vkontakte.source_files = 'Classes/ShareKit/Sharers/Services/Vkontakte/**/*.{h,m}'
-    vkontakte.dependency 'ShareKit/Core'
-  end
+#  s.subspec 'Vkontakte' do |vkontakte|
+#    vkontakte.source_files = 'Classes/ShareKit/Sharers/Services/Vkontakte/**/*.{h,m}'
+#    vkontakte.dependency 'ShareKit/Core'
+#  end
 
-  s.subspec 'Instagram' do |instagram|
-    instagram.source_files = 'Classes/ShareKit/Sharers/Services/Instagram/**/*.{h,m}'
-    instagram.dependency 'ShareKit/Core'
-  end
+#  s.subspec 'Instagram' do |instagram|
+#    instagram.source_files = 'Classes/ShareKit/Sharers/Services/Instagram/**/*.{h,m}'
+#    instagram.dependency 'ShareKit/Core'
+#  end
   
 #  s.subspec 'Imgur' do |imgur|
 #    imgur.source_files = 'Classes/ShareKit/Sharers/Services/Imgur/**/*.{h,m}'
 #    imgur.dependency 'ShareKit/Core'
 #  end
 
-  s.subspec 'Pinterest' do |pinterest|
-    pinterest.source_files = 'Classes/ShareKit/Sharers/Services/Pinterest/**/*.{h,m}'
-    pinterest.dependency 'Pinterest-iOS', '~> 2.3'
-    pinterest.dependency 'ShareKit/Core'
-  end
+#  s.subspec 'Pinterest' do |pinterest|
+#    pinterest.source_files = 'Classes/ShareKit/Sharers/Services/Pinterest/**/*.{h,m}'
+#    pinterest.dependency 'Pinterest-iOS', '~> 2.3'
+#    pinterest.dependency 'ShareKit/Core'
+#  end
   
 #  s.subspec 'WhatsApp' do |whatsapp|
 #      whatsapp.source_files = 'Classes/ShareKit/Sharers/Services/WhatsApp/**/*.{h,m}'
