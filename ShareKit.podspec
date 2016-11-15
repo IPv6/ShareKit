@@ -173,21 +173,21 @@ Pod::Spec.new do |s|
 #   onenote.resource = 'Frameworks/LiveSDK.framework'
 # end
 
-  s.subspec 'YouTube' do |youtube|
-    youtube.source_files = 'Classes/ShareKit/Sharers/Services/YouTube/**/*.{h,m}'
-    youtube.dependency 'ShareKit/Core'
-    youtube.dependency 'Google-API-Client/YouTube'
-  end
+#  s.subspec 'YouTube' do |youtube|
+#    youtube.source_files = 'Classes/ShareKit/Sharers/Services/YouTube/**/*.{h,m}'
+#    youtube.dependency 'ShareKit/Core'
+#    youtube.dependency 'Google-API-Client/YouTube'
+#  end
 
-  s.subspec 'GooglePlus' do |googleplus|
-    googleplus.source_files = 'Classes/ShareKit/Sharers/Services/Google Plus/**/*.{h,m}'
-    googleplus.vendored_frameworks = 'Frameworks/GooglePlus.framework'
-    googleplus.resource = "Frameworks/GooglePlus.bundle"
-    googleplus.framework = 'AssetsLibrary', 'CoreLocation', 'CoreMotion', 'CoreGraphics', 'CoreText', 'MediaPlayer', 'Security', 'SystemConfiguration', 'AddressBook'
-    googleplus.dependency 'ShareKit/Core'
-    googleplus.dependency 'Google-API-Client/Plus'
-    googleplus.dependency 'OpenInChrome'
-    googleplus.dependency 'gtm-logger'
-  end
+#  s.subspec 'GooglePlus' do |googleplus|
+#    googleplus.source_files = 'Classes/ShareKit/Sharers/Services/Google Plus/**/*.{h,m}'
+#    googleplus.vendored_frameworks = 'Frameworks/GooglePlus.framework'
+#    googleplus.resource = "Frameworks/GooglePlus.bundle"
+#    googleplus.framework = 'AssetsLibrary', 'CoreLocation', 'CoreMotion', 'CoreGraphics', 'CoreText', 'MediaPlayer', 'Security', 'SystemConfiguration', 'AddressBook'
+#    googleplus.dependency 'ShareKit/Core'
+#    googleplus.dependency 'Google-API-Client/Plus'
+#    googleplus.dependency 'OpenInChrome'
+#    googleplus.dependency 'gtm-logger'
+#  end
 
 end
